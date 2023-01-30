@@ -1,0 +1,86 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `order_status`(month1 varchar(20), year1 int)
+BEGIN
+select ordernumber, orderdate, status from orders where year (orderdate)=year1 and left
+(monthname(orderdate),3)=month1;
+END
+
+mysql> call order_status(2005,11);
+Empty set (0.01 sec)
+
+Query OK, 0 rows affected (0.01 sec)
+
+Create Table Cancellations
+(Id Int Primary Key,
+customerNumber Int,
+orderNumber Int,
+CONSTRAINT `Cancellations_ibfk_1` FOREIGN KEY (`customerNumber`) REFERENCES `customers` (`customerNumber`),
+CONSTRAINT `Cancellations_ibfk_2` FOREIGN KEY (`orderNumber`) REFERENCES `orders` (`orderNumber`),
+Comments Varchar(1000)
+);
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `CANCELLATION_CHECK`()
+BEGIN
+DECLARE CH_STATUS,CH_COMMENTS VARCHAR(30);
+DECLARE CH_ID,CH_CUSTOMERNUMBER,CH_ORDERNUMBER INT;
+DECLARE MYCUR CURSOR FOR SELECT STATUS,COMMENTS,CUSTOMERNUMBER,ORDERNUMBER FROM ORDERS;
+OPEN MYCUR;
+FETCH MYCUR INTO CH_STATUS,CH_COMMENTS,CH_CUSTOMERNUMBER,CH_ORDERNUMBER;
+IF CH_STATUS='CANCELLED'THEN 
+INSERT INTO CANCELLATIONS VALUES (CH_ID,CH_CUSTOMERNUMBER,CH_ORDERNUMBER,CH_COMMENTS);
+CLOSE MYCUR;
+END IF;
+END$$
+DELIMITER ;
+
+CREATE FUNCTION purchase_status(
+credit DECIMAL(10,2)
+)
+RETURNS VARCHAR(20)
+DETERMINISTIC
+BEGIN
+DECLARE purchase_status VARCHAR(20);
+IF credit > 50000 THEN
+SET purchase_status = 'PLATINUM';
+ELSEIF (credit >= 50000 AND
+credit <= 10000) THEN
+SET purchase_status = 'GOLD';
+ELSEIF credit < 10000 THEN
+SET purchase_status = 'SILVER';
+END IF;
+-- return the customer level
+RETURN (purchase_status);
+END$$
+DELIMITER ;
+
+
+Select customerNumber, customername ,purchase_status(creditLimit)
+from Customers;	
+
+DELIMITER $$
+CREATE TRIGGER trg_movies_update
+AFTER DELETE ON movies
+FOR EACH ROW
+BEGIN
+    UPDATE rentals
+    SET movieid = id
+    WHERE movieid = OLD.id ;
+END;
+
+CREATE TRIGGER trg_movies_delete 
+AFTER DELETE ON movies 
+FOR EACH ROW 
+BEGIN
+    DELETE FROM  rentals
+    WHERE movieid 
+    NOT IN (SELECT DISTINCT id FROM movies);
+END;
+
+Select Fname,Salary
+From Employee 
+Order By Salary Desc
+Limit 2,1;
+
+SELECT Salary,   
+RANK () OVER (ORDER BY Salary) AS Rank_No   
+FROM Employee; 
+
